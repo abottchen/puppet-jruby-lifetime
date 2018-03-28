@@ -17,7 +17,7 @@ ARGV.each do |file|
             index += 1
         end
         created["#{id}.#{index}"] = date
-      elsif line =~ /^(\d\d\d\d-\d\d-\d\d \d\d:\d\d:\d\d),\d\d\d INFO .*? Cleaned up old JRubyInstance with id (\d+)/ then
+      elsif line =~ /^(\d\d\d\d-\d\d-\d\d \d\d:\d\d:\d\d),\d\d\d INFO .*? Flushing JRubyInstance (\d+)/ then
         date = $1
         id = $2
         # If we find a destroyed, but there is no create, then this is an orphan at the start of the file.  Throw it out.
@@ -36,6 +36,11 @@ low = 9999999999
 total = 0
 num = 0
 
+if destroyed == {} then
+  abort("There were no JRuby Flush events")
+end
+
+
 destroyed.each do |k,v|
   next if !created.has_key?(k)
   delta = DateTime.parse(v) - DateTime.parse(created[k])
@@ -49,7 +54,7 @@ destroyed.each do |k,v|
   total += dsec
   num += 1
   delta = DateTime.strptime(dsec.ceil.to_s, "%s").strftime("%H:%M:%S")
-  puts "#{k} - Created at #{created[k]} and destroyed at #{v}, delta=#{delta}"
+  puts "#{k} - Created at #{created[k]} and hit max-requests-per-instance at #{v}, delta=#{delta}"
 end
 
 puts "Longest uptime: #{DateTime.strptime(high.to_s, "%s").strftime("%H:%M:%S")}  shortest uptime: #{DateTime.strptime(low.to_s, "%s").strftime("%H:%M:%S")}  average: #{DateTime.strptime((total/num).ceil.to_s,"%s").strftime("%H:%M:%S")}"
